@@ -75,12 +75,19 @@ SEASONS_DATA = {
     "tungi_borilar_5": {"start": 332, "end": 351},
     "tungi_borilar_6": {"start": 352, "end": 371},
 
-    # --- YIGITLAR SERIALI DIAPAZONLARI (395 dan 434 gacha, 5 ta fasl, 8 tadan qism) ---
+    # --- YIGITLAR SERIALI DIAPAZONLARI ---
     "yigitlar_1": {"start": 395, "end": 402},
     "yigitlar_2": {"start": 403, "end": 410},
     "yigitlar_3": {"start": 411, "end": 418},
     "yigitlar_4": {"start": 419, "end": 426},
     "yigitlar_5": {"start": 427, "end": 434},
+
+    # --- YANGI QO'SHILGAN SERIAL LAR (POST ID LARINI KANALINGIZGA QARAB O'ZGARTIRASIZ) ---
+    "avatar_ang_1": {"start": 0, "end": 0},
+    "ruxshunos_1": {"start": 0, "end": 0},
+    "orgimchak_nuar_1": {"start": 0, "end": 0},
+    "haqiqiylar_1": {"start": 0, "end": 0},
+    "umar_ibn_xattob_1": {"start": 0, "end": 0},
 }
 
 # --- KEYBOARDLAR ---
@@ -105,7 +112,12 @@ def get_serials_menu():
         [InlineKeyboardButton(text="🎬 Mashaqqatlar sari", callback_data="show_mashaqqatlar")],
         [InlineKeyboardButton(text="🩺 Dexter", callback_data="show_dexter")],
         [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")],
-        [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")]
+        [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")],
+        [InlineKeyboardButton(text="🌊 Avatar: Ang afsonasi", callback_data="show_avatar_ang")],
+        [InlineKeyboardButton(text="🔮 Ruxshunos", callback_data="show_ruxshunos")],
+        [InlineKeyboardButton(text="🕷️ O'rgimchak-Nuar", callback_data="show_orgimchak_nuar")],
+        [InlineKeyboardButton(text="👑 Haqiqiylar | The Originals", callback_data="show_haqiqiylar")],
+        [InlineKeyboardButton(text="🌙 Umar ibn Xattob", callback_data="show_umar_ibn_xattob")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -139,12 +151,47 @@ def get_tungi_borilar_seasons_menu():
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-# --- YIGITLAR SERIALI FASLLAR MENYUSI (5 TA FASL) ---
 def get_yigitlar_seasons_menu():
     kb = [
         [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_yigitlar_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_yigitlar_2")],
         [InlineKeyboardButton(text="3-Fasl 🍿", callback_data="play_yigitlar_3"), InlineKeyboardButton(text="4-Fasl 🍿", callback_data="play_yigitlar_4")],
         [InlineKeyboardButton(text="5-Fasl 🍿", callback_data="play_yigitlar_5")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+# --- YANGI SERIAL LARDAN IBAROT 1-FASLLI MENYULAR ---
+def get_avatar_ang_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_avatar_ang_1")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_ruxshunos_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_ruxshunos_1")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_orgimchak_nuar_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_orgimchak_nuar_1")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_haqiqiylar_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_haqiqiylar_1")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_umar_ibn_xattob_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_umar_ibn_xattob_1")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -273,10 +320,35 @@ async def tungi_borilar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🐺 **Tungi bo'rilar** seriali.\n\nFaslni tanlang:", reply_markup=get_tungi_borilar_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
-# --- YIGITLAR HANDLERI ---
 @dp.callback_query(F.data == "show_yigitlar")
 async def yigitlar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🎬 **Yigitlar** seriali.\n\nFaslni tanlang:", reply_markup=get_yigitlar_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+# --- YANGI SERIAL LARDAN IBAROT HANDLERLAR ---
+@dp.callback_query(F.data == "show_avatar_ang")
+async def avatar_ang_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("🌊 **Avatar: Ang afsonasi** seriali.\n\nFaslni tanlang:", reply_markup=get_avatar_ang_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+@dp.callback_query(F.data == "show_ruxshunos")
+async def ruxshunos_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("🔮 **Ruxshunos** seriali.\n\nFaslni tanlang:", reply_markup=get_ruxshunos_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+@dp.callback_query(F.data == "show_orgimchak_nuar")
+async def orgimchak_nuar_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("🕷️ **O'rgimchak-Nuar** seriali.\n\nFaslni tanlang:", reply_markup=get_orgimchak_nuar_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+@dp.callback_query(F.data == "show_haqiqiylar")
+async def haqiqiylar_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("👑 **Haqiqiylar | The Originals** seriali.\n\nFaslni tanlang:", reply_markup=get_haqiqiylar_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+@dp.callback_query(F.data == "show_umar_ibn_xattob")
+async def umar_ibn_xattob_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("🌙 **Umar ibn Xattob** seriali.\n\nFaslni tanlang:", reply_markup=get_umar_ibn_xattob_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "back_to_serials")
@@ -289,7 +361,7 @@ async def send_season_episodes(callback: types.CallbackQuery):
     season_key = callback.data.replace("play_", "")
     season_info = SEASONS_DATA.get(season_key)
 
-    if not season_info:
+    if not season_info or (season_info["start"] == 0 and season_info["end"] == 0):
         await callback.answer("❌ Ushbu fasl ma'lumotlari hali yuklanmagan.", show_alert=True)
         return
 
