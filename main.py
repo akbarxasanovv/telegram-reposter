@@ -4,9 +4,9 @@ from aiohttp import web
 from PIL import Image
 from telethon import TelegramClient
 
-# --- 1. RENDER PORT BINDING UCHUN ASINXRON HTTP SERVER ---
+# --- 1. HEALTH-CHECK SERVER ---
 async def handle_health_check(request):
-    return web.Response(text="Bot muvaffaqiyatli ishlayapti!")
+    return web.Response(text="Bot ishlayapti!")
 
 async def start_web_server():
     app = web.Application()
@@ -17,10 +17,10 @@ async def start_web_server():
     port = int(os.environ.get("PORT", 8080))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    print(f"🌐 Health-check veb-server {port}-portda ISHGA TUSHDI!")
+    print(f"🌐 Server {port}-portda ishga tushdi.")
 
 
-# --- 2. TELEGRAM VA SKRIPT SOZLAMALARI ---
+# --- 2. SOZLAMALAR ---
 API_ID = 36328678
 API_HASH = "c1d096506263cdd949c0708b30dda3c3"
 
@@ -42,12 +42,13 @@ SEASON_EPISODES = {
     1: 8, 2: 8, 3: 8, 4: 8, 5: 8
 }
 
+# Fayl nomi GitHub'dagi faylingiz bilan 100% bir xil bo'lishi shart!
 client = TelegramClient('my_session', API_ID, API_HASH)
 
 
-# --- 3. MUQOVANI TAYYORLASH (PILLOW) ---
 def prepare_thumbnail(path):
     if not os.path.exists(path):
+        print("⚠️ cover.jpg fayli topilmadi!")
         return None
     try:
         im = Image.open(path)
@@ -56,21 +57,24 @@ def prepare_thumbnail(path):
         im.save(thumb_path, 'JPEG')
         return thumb_path
     except Exception as e:
-        print(f"⚠️ Rasm tayyorlashda xatolik: {e}")
+        print(f"⚠️ Rasm xatosi: {e}")
         return None
 
 
-# --- 4. ASOSIY REPOSTER FUNKSIYASI ---
+# --- 3. ASOSIY REPOSTER ---
 async def run_reposter():
     try:
+        print("🔄 Telegram akkauntga ulanish boshlandi...")
         await client.start()
-        print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
+        print("✅ Telegram akkauntga MUVAFFAQIYATLI ulanindi!")
 
         target_entities = []
         for chat in TARGET_CHATS:
             try:
+                print(f"🔍 Kanal tekshirilmoqda: {chat}")
                 entity = await client.get_entity(chat)
                 target_entities.append(entity)
+                print(f"✅ Kanal muvaffaqiyatli yuklandi: {chat}")
             except Exception as e:
                 print(f"❌ Kanalni yuklashda xatolik ({chat}): {e}")
 
@@ -81,13 +85,15 @@ async def run_reposter():
 
         for msg_id in range(START_MSG, END_MSG + 1):
             try:
+                print(f"\n📩 Post ID {msg_id} manba kanalidan olinmoqda...")
                 message = await client.get_messages(SOURCE_CHAT, ids=msg_id)
                 
                 if message and message.media:
                     caption = f"🎬 **Yigitlar**\n📌 **{current_season}-fasl | {current_episode}-qism**\n\n🤖 Bot: {MY_BOT_LINK}"
 
-                    print(f"\n📥 Post ID {msg_id} yuklanmoqda...")
+                    print(f"📥 Post ID {msg_id} video fayli yuklab olinmoqda...")
                     downloaded_file = await client.download_media(message, file="temp_video.mp4")
+                    print(f"✅ Video yuklab olindi!")
 
                     for idx, entity in enumerate(target_entities, start=1):
                         print(f"📤 {idx}-kanalga yuborilmoqda...")
@@ -100,7 +106,7 @@ async def run_reposter():
                             parse_mode="md"
                         )
                     
-                    print(f"✅ Post ID: {msg_id} ➔ Yigitlar {current_season}-fasl | {current_episode}-qism yuklandi!")
+                    print(f"🎉 Post ID: {msg_id} ➔ Yigitlar {current_season}-fasl | {current_episode}-qism barcha kanallarga joylandi!")
 
                     if os.path.exists(downloaded_file):
                         os.remove(downloaded_file)
@@ -113,7 +119,7 @@ async def run_reposter():
 
                     await asyncio.sleep(3)
                 else:
-                    print(f"⚠️ {msg_id}-postda media topilmadi, o'tkazib yuborildi.")
+                    print(f"⚠️ {msg_id}-postda media topilmadi yoki post bo'sh.")
 
             except Exception as e:
                 print(f"❌ {msg_id}-postda xatolik yuz berdi: {e}")
@@ -123,12 +129,12 @@ async def run_reposter():
         if thumb_file and os.path.exists(thumb_file):
             os.remove(thumb_file)
 
-        print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
+        print("\n🏁 Barcha postlar tugadi!")
+
     except Exception as e:
-        print(f"🔥 Kutilmagan xatolik: {e}")
+        print(f"🔥 Telegram ulanishda jiddiy xatolik: {e}")
 
 
-# --- 5. BIR VAQTNING O'ZIDA ISHGA TUSHIRISH ---
 async def main():
     await start_web_server()
     asyncio.create_task(run_reposter())
