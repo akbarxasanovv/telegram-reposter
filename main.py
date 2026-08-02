@@ -62,79 +62,76 @@ def prepare_thumbnail(path):
 
 # --- 4. ASOSIY REPOSTER FUNKSIYASI ---
 async def run_reposter():
-    # Telegram mijozini ishga tushirish
-    await client.start()
-    print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
+    try:
+        await client.start()
+        print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
 
-    target_entities = []
-    for chat in TARGET_CHATS:
-        try:
-            entity = await client.get_entity(chat)
-            target_entities.append(entity)
-        except Exception as e:
-            print(f"❌ Kanalni yuklashda xatolik ({chat}): {e}")
+        target_entities = []
+        for chat in TARGET_CHATS:
+            try:
+                entity = await client.get_entity(chat)
+                target_entities.append(entity)
+            except Exception as e:
+                print(f"❌ Kanalni yuklashda xatolik ({chat}): {e}")
 
-    current_season = 1
-    current_episode = 1
+        current_season = 1
+        current_episode = 1
 
-    thumb_file = prepare_thumbnail(NEW_THUMBNAIL)
+        thumb_file = prepare_thumbnail(NEW_THUMBNAIL)
 
-    for msg_id in range(START_MSG, END_MSG + 1):
-        try:
-            message = await client.get_messages(SOURCE_CHAT, ids=msg_id)
-            
-            if message and message.media:
-                caption = f"🎬 **Yigitlar**\n📌 **{current_season}-fasl | {current_episode}-qism**\n\n🤖 Bot: {MY_BOT_LINK}"
-
-                print(f"\n📥 Post ID {msg_id} yuklanmoqda...")
-                downloaded_file = await client.download_media(message, file="temp_video.mp4")
-
-                for idx, entity in enumerate(target_entities, start=1):
-                    print(f"📤 {idx}-kanalga yuborilmoqda...")
-                    await client.send_file(
-                        entity,
-                        file=downloaded_file,
-                        caption=caption,
-                        thumb=thumb_file if (thumb_file and os.path.exists(thumb_file)) else None,
-                        supports_streaming=True,
-                        parse_mode="md"
-                    )
+        for msg_id in range(START_MSG, END_MSG + 1):
+            try:
+                message = await client.get_messages(SOURCE_CHAT, ids=msg_id)
                 
-                print(f"✅ Post ID: {msg_id} ➔ Yigitlar {current_season}-fasl | {current_episode}-qism yuklandi!")
+                if message and message.media:
+                    caption = f"🎬 **Yigitlar**\n📌 **{current_season}-fasl | {current_episode}-qism**\n\n🤖 Bot: {MY_BOT_LINK}"
 
-                if os.path.exists(downloaded_file):
-                    os.remove(downloaded_file)
+                    print(f"\n📥 Post ID {msg_id} yuklanmoqda...")
+                    downloaded_file = await client.download_media(message, file="temp_video.mp4")
 
-                current_episode += 1
-                max_episodes = SEASON_EPISODES.get(current_season, 8)
-                if current_episode > max_episodes:
-                    current_season += 1
-                    current_episode = 1
+                    for idx, entity in enumerate(target_entities, start=1):
+                        print(f"📤 {idx}-kanalga yuborilmoqda...")
+                        await client.send_file(
+                            entity,
+                            file=downloaded_file,
+                            caption=caption,
+                            thumb=thumb_file if (thumb_file and os.path.exists(thumb_file)) else None,
+                            supports_streaming=True,
+                            parse_mode="md"
+                        )
+                    
+                    print(f"✅ Post ID: {msg_id} ➔ Yigitlar {current_season}-fasl | {current_episode}-qism yuklandi!")
 
-                await asyncio.sleep(3)
-            else:
-                print(f"⚠️ {msg_id}-postda media topilmadi, o'tkazib yuborildi.")
+                    if os.path.exists(downloaded_file):
+                        os.remove(downloaded_file)
 
-        except Exception as e:
-            print(f"❌ {msg_id}-postda xatolik yuz berdi: {e}")
-            if os.path.exists("temp_video.mp4"):
-                os.remove("temp_video.mp4")
+                    current_episode += 1
+                    max_episodes = SEASON_EPISODES.get(current_season, 8)
+                    if current_episode > max_episodes:
+                        current_season += 1
+                        current_episode = 1
 
-    if thumb_file and os.path.exists(thumb_file):
-        os.remove(thumb_file)
+                    await asyncio.sleep(3)
+                else:
+                    print(f"⚠️ {msg_id}-postda media topilmadi, o'tkazib yuborildi.")
 
-    print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
+            except Exception as e:
+                print(f"❌ {msg_id}-postda xatolik yuz berdi: {e}")
+                if os.path.exists("temp_video.mp4"):
+                    os.remove("temp_video.mp4")
+
+        if thumb_file and os.path.exists(thumb_file):
+            os.remove(thumb_file)
+
+        print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
+    except Exception as e:
+        print(f"🔥 Kutilmagan xatolik: {e}")
 
 
 # --- 5. BIR VAQTNING O'ZIDA ISHGA TUSHIRISH ---
 async def main():
-    # 1. Avval darhol Render uchun veb-serverni yoqamiz (Timed Out bo'lmasligi uchun)
     await start_web_server()
-    
-    # 2. Telegram repost skriptini fonda (background task) parallel topshiriq qilib qo'shamiz
     asyncio.create_task(run_reposter())
-
-    # 3. Server to'xtab qolmasligi uchun doimiy kutish rejimiga o'tamiz
     await asyncio.Event().wait()
 
 if __name__ == '__main__':
