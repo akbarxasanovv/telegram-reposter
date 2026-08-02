@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-from aiohttp import web
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
@@ -69,18 +68,27 @@ SEASONS_DATA = {
     "yigitlar_4": {"start": 419, "end": 426},
     "yigitlar_5": {"start": 427, "end": 434},
 
-    # --- YANGI QO'SHILGAN SERIAL DAFALARI VA POST ID'LARI ---
-    # Avatar: Ang afsonasi (Jami 15 qism: 451-465)
-    "avatar_ang_1": {"start": 451, "end": 458}, # 8 ta qism
-    "avatar_ang_2": {"start": 459, "end": 465}, # 7 ta qism
+    "avatar_ang_1": {"start": 451, "end": 458},
+    "avatar_ang_2": {"start": 459, "end": 465},
 
-    # O'rgimchak-Nuar (Jami 7 qism: 467-473)
-    "orgimchak_nuar_1": {"start": 467, "end": 473}, # 7 ta qism
+    "orgimchak_nuar_1": {"start": 467, "end": 473},
 
-    # Umar ibn Xattob (Jami 30 qism: 474-503)
-    "umar_ibn_xattob_1": {"start": 474, "end": 483}, # 1-10 qismlar
-    "umar_ibn_xattob_2": {"start": 484, "end": 493}, # 11-20 qismlar
-    "umar_ibn_xattob_3": {"start": 494, "end": 503}, # 21-30 qismlar
+    "umar_ibn_xattob_1": {"start": 474, "end": 483},
+    "umar_ibn_xattob_2": {"start": 484, "end": 493},
+    "umar_ibn_xattob_3": {"start": 494, "end": 503},
+
+    # --- YANGI QO'SHILGAN SERIAL LAR (ID-lar kiritilishi kutilmoqda) ---
+    "loki_1": {"start": 0, "end": 0},
+    "wednesday_1": {"start": 0, "end": 0},
+    "dark_1": {"start": 0, "end": 0},
+    "true_detective_1": {"start": 0, "end": 0},
+    "ruxshunos_1": {"start": 0, "end": 0},
+    "better_call_saul_1": {"start": 0, "end": 0},
+    "vampirlar_kundaligi_1": {"start": 0, "end": 0},
+    "sherlock_1": {"start": 0, "end": 0},
+    "oy_ritsari_1": {"start": 0, "end": 0},
+    "yigit_sozi_1": {"start": 0, "end": 0},
+    "qudrat_uzuklari_1": {"start": 0, "end": 0},
 }
 
 # --- KEYBOARDLAR ---
@@ -106,7 +114,28 @@ def get_serials_menu():
         [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")],
         [InlineKeyboardButton(text="🌊 Avatar: Ang afsonasi", callback_data="show_avatar_ang")],
         [InlineKeyboardButton(text="🕷️ O'rgimchak-Nuar", callback_data="show_orgimchak_nuar")],
-        [InlineKeyboardButton(text="🌙 Umar ibn Xattob", callback_data="show_umar_ibn_xattob")]
+        [InlineKeyboardButton(text="🌙 Umar ibn Xattob", callback_data="show_umar_ibn_xattob")],
+        
+        # Yangi qo'shilgan seriallar:
+        [InlineKeyboardButton(text="⚡ Loki", callback_data="show_loki")],
+        [InlineKeyboardButton(text="🕷️ Wednesday", callback_data="show_wednesday")],
+        [InlineKeyboardButton(text="⏳ Dark | Zulmat", callback_data="show_dark")],
+        [InlineKeyboardButton(text="🔍 Chinakam izquvar", callback_data="show_true_detective")],
+        [InlineKeyboardButton(text="🧠 Ruxshunos", callback_data="show_ruxshunos")],
+        [InlineKeyboardButton(text="⚖️ Better Call Saul", callback_data="show_better_call_saul")],
+        [InlineKeyboardButton(text="🩸 Vampirlar Kundaligi", callback_data="show_vampirlar_kundaligi")],
+        [InlineKeyboardButton(text="🕵️‍♂️ Sherlock", callback_data="show_sherlock")],
+        [InlineKeyboardButton(text="🌙 Oy Ritsari", callback_data="show_oy_ritsari")],
+        [InlineKeyboardButton(text="🤝 Yigit So'zi", callback_data="show_yigit_sozi")],
+        [InlineKeyboardButton(text="💍 Uzuklar Hukmdori: Qudrat uzuklari", callback_data="show_qudrat_uzuklari")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+# --- INDIVIDUAL SERIAL MENYULARI (STANDART 1-FASL) ---
+def get_single_season_menu(play_key: str):
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data=f"play_{play_key}_1")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -149,17 +178,9 @@ def get_yigitlar_seasons_menu():
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-# --- YANGI SERIAL LARDAN IBAROT MENYULAR ---
 def get_avatar_ang_seasons_menu():
     kb = [
         [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_avatar_ang_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_avatar_ang_2")],
-        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=kb)
-
-def get_orgimchak_nuar_seasons_menu():
-    kb = [
-        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_orgimchak_nuar_1")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -275,6 +296,7 @@ async def tv_shows_section(message: types.Message):
         parse_mode="Markdown"
     )
 
+# Callback Handlers
 @dp.callback_query(F.data == "show_mashaqqatlar")
 async def mashaqqatlar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🎬 **Mashaqqatlar sari** seriali.\n\nFaslni tanlang:", reply_markup=get_mashaqqatlar_seasons_menu(), parse_mode="Markdown")
@@ -302,12 +324,33 @@ async def avatar_ang_handler(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == "show_orgimchak_nuar")
 async def orgimchak_nuar_handler(callback: types.CallbackQuery):
-    await callback.message.edit_text("🕷️ **O'rgimchak-Nuar** seriali.\n\nFaslni tanlang:", reply_markup=get_orgimchak_nuar_seasons_menu(), parse_mode="Markdown")
+    await callback.message.edit_text("🕷️ **O'rgimchak-Nuar** seriali.\n\nFaslni tanlang:", reply_markup=get_single_season_menu("orgimchak_nuar"), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "show_umar_ibn_xattob")
 async def umar_ibn_xattob_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🌙 **Umar ibn Xattob** seriali.\n\nQismlar blokini tanlang:", reply_markup=get_umar_ibn_xattob_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+# --- YANGI SERIAL HANDLERLARI ---
+@dp.callback_query(F.data.startswith("show_"))
+async def show_single_season_serial(callback: types.CallbackQuery):
+    serial_key = callback.data.replace("show_", "")
+    names = {
+        "loki": "⚡ Loki",
+        "wednesday": "🕷️ Wednesday",
+        "dark": "⏳ Dark | Zulmat",
+        "true_detective": "🔍 Chinakam izquvar",
+        "ruxshunos": "🧠 Ruxshunos",
+        "better_call_saul": "⚖️ Better Call Saul",
+        "vampirlar_kundaligi": "🩸 Vampirlar Kundaligi",
+        "sherlock": "🕵️‍♂️ Sherlock",
+        "oy_ritsari": "🌙 Oy Ritsari",
+        "yigit_sozi": "🤝 Yigit So'zi",
+        "qudrat_uzuklari": "💍 Uzuklar Hukmdori: Qudrat uzuklari"
+    }
+    serial_title = names.get(serial_key, "Serial")
+    await callback.message.edit_text(f"🎬 **{serial_title}** seriali.\n\nFaslni tanlang:", reply_markup=get_single_season_menu(serial_key), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "back_to_serials")
@@ -320,8 +363,8 @@ async def send_season_episodes(callback: types.CallbackQuery):
     season_key = callback.data.replace("play_", "")
     season_info = SEASONS_DATA.get(season_key)
 
-    if not season_info:
-        await callback.answer("❌ Ushbu fasl ma'lumotlari hali yuklanmagan.", show_alert=True)
+    if not season_info or season_info["start"] == 0:
+        await callback.answer("❌ Ushbu fasl post ID-lari hali kiritilmagan.", show_alert=True)
         return
 
     await callback.answer()
