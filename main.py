@@ -26,6 +26,7 @@ async def start_web_server():
 # --- 2. SOZLAMALAR ---
 BOT_TOKEN = "8960989758:AAGOUyvtZl7x4LzkD9zSL9duB3RPjPP6kCM"
 CHANNEL_ID = -1003823159246
+# ASOSIY BAZA KANALI HAVOLASI: https://t.me/+zSZA7nG4OHNmYmIy
 OWNER_ID = 8314147254
 
 bot = Bot(token=BOT_TOKEN)
@@ -74,11 +75,12 @@ SEASONS_DATA = {
     "tungi_borilar_5": {"start": 332, "end": 351},
     "tungi_borilar_6": {"start": 352, "end": 371},
 
-    # --- YIGITLAR SERIALI DIAPAZONLARI (O'ZINGIZNING KANALINGIZGA QARAB RAQAMLARNI O'ZGARTIRING) ---
-    "yigitlar_1": {"start": 372, "end": 380},
-    "yigitlar_2": {"start": 381, "end": 390},
-    "yigitlar_3": {"start": 391, "end": 400},
-    "yigitlar_4": {"start": 401, "end": 410},
+    # --- YIGITLAR SERIALI DIAPAZONLARI (395 dan 434 gacha, 5 ta fasl, 8 tadan qism) ---
+    "yigitlar_1": {"start": 395, "end": 402},
+    "yigitlar_2": {"start": 403, "end": 410},
+    "yigitlar_3": {"start": 411, "end": 418},
+    "yigitlar_4": {"start": 419, "end": 426},
+    "yigitlar_5": {"start": 427, "end": 434},
 }
 
 # --- KEYBOARDLAR ---
@@ -102,7 +104,7 @@ def get_serials_menu():
     kb = [
         [InlineKeyboardButton(text="🎬 Mashaqqatlar sari", callback_data="show_mashaqqatlar")],
         [InlineKeyboardButton(text="🩺 Dexter", callback_data="show_dexter")],
-        [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")], # <-- VERGUL TO'G'RILANDI
+        [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")],
         [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -137,11 +139,12 @@ def get_tungi_borilar_seasons_menu():
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-# --- YIGITLAR SERIALI FASLLAR MENYUSI ---
+# --- YIGITLAR SERIALI FASLLAR MENYUSI (5 TA FASL) ---
 def get_yigitlar_seasons_menu():
     kb = [
         [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_yigitlar_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_yigitlar_2")],
         [InlineKeyboardButton(text="3-Fasl 🍿", callback_data="play_yigitlar_3"), InlineKeyboardButton(text="4-Fasl 🍿", callback_data="play_yigitlar_4")],
+        [InlineKeyboardButton(text="5-Fasl 🍿", callback_data="play_yigitlar_5")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
