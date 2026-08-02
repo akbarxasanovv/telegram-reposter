@@ -97,6 +97,7 @@ def get_serials_menu():
         [InlineKeyboardButton(text="🎬 Mashaqqatlar sari", callback_data="show_mashaqqatlar")],
         [InlineKeyboardButton(text="🩺 Dexter", callback_data="show_dexter")],
         [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")]
+        [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
