@@ -8,25 +8,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-# --- 1. RENDER PORT SERVERI ---
-async def handle_ping(request):
-    return web.Response(text="Kino Bot Render-da 24/7 ishlamoqda! 🚀")
-
-async def start_web_server():
-    app = web.Application()
-    app.router.add_get('/', handle_ping)
-    
-    port = int(os.environ.get("PORT", 8080))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    print(f"🌐 Health-check veb-server {port}-portda ishga tushdi!")
-
-# --- 2. SOZLAMALAR ---
+# 1. BOT TOKEN
 BOT_TOKEN = "8960989758:AAGOUyvtZl7x4LzkD9zSL9duB3RPjPP6kCM"
+
+# 2. KANAL ID RAQAMI
 CHANNEL_ID = -1003823159246
-# ASOSIY BAZA KANALI HAVOLASI: https://t.me/+zSZA7nG4OHNmYmIy
+
+# 3. BOT EGASI TELEGRAM ID'SI
 OWNER_ID = 8314147254
 
 bot = Bot(token=BOT_TOKEN)
@@ -51,7 +39,7 @@ MOVIES_DATABASE = [
     }
 ]
 
-# 5. SERIAL QISMLARI
+# 5. SERIAL QISMLARI VA POST ID-LARI
 SEASONS_DATA = {
     "mashaqqatlar_1": {"start": 3, "end": 9},
     "mashaqqatlar_2": {"start": 10, "end": 22},
@@ -75,19 +63,24 @@ SEASONS_DATA = {
     "tungi_borilar_5": {"start": 332, "end": 351},
     "tungi_borilar_6": {"start": 352, "end": 371},
 
-    # --- YIGITLAR SERIALI DIAPAZONLARI ---
     "yigitlar_1": {"start": 395, "end": 402},
     "yigitlar_2": {"start": 403, "end": 410},
     "yigitlar_3": {"start": 411, "end": 418},
     "yigitlar_4": {"start": 419, "end": 426},
     "yigitlar_5": {"start": 427, "end": 434},
 
-    # --- YANGI QO'SHILGAN SERIAL LAR (POST ID LARINI KANALINGIZGA QARAB O'ZGARTIRASIZ) ---
-    "avatar_ang_1": {"start": 0, "end": 0},
-    "ruxshunos_1": {"start": 0, "end": 0},
-    "orgimchak_nuar_1": {"start": 0, "end": 0},
-    "haqiqiylar_1": {"start": 0, "end": 0},
-    "umar_ibn_xattob_1": {"start": 0, "end": 0},
+    # --- YANGI QO'SHILGAN SERIAL DAFALARI VA POST ID'LARI ---
+    # Avatar: Ang afsonasi (Jami 15 qism: 451-465)
+    "avatar_ang_1": {"start": 451, "end": 458}, # 8 ta qism
+    "avatar_ang_2": {"start": 459, "end": 465}, # 7 ta qism
+
+    # O'rgimchak-Nuar (Jami 7 qism: 467-473)
+    "orgimchak_nuar_1": {"start": 467, "end": 473}, # 7 ta qism
+
+    # Umar ibn Xattob (Jami 30 qism: 474-503)
+    "umar_ibn_xattob_1": {"start": 474, "end": 483}, # 1-10 qismlar
+    "umar_ibn_xattob_2": {"start": 484, "end": 493}, # 11-20 qismlar
+    "umar_ibn_xattob_3": {"start": 494, "end": 503}, # 21-30 qismlar
 }
 
 # --- KEYBOARDLAR ---
@@ -98,10 +91,8 @@ def get_main_menu(user_id: int):
             KeyboardButton(text="🍿 Seriallar")
         ]
     ]
-    
     if user_id in ADMINS:
         kb.append([KeyboardButton(text="📊 Bot ma'lumotlari")])
-        
     if user_id == OWNER_ID:
         kb.append([KeyboardButton(text="➕ Admin qo'shish")])
         
@@ -114,9 +105,7 @@ def get_serials_menu():
         [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")],
         [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")],
         [InlineKeyboardButton(text="🌊 Avatar: Ang afsonasi", callback_data="show_avatar_ang")],
-        [InlineKeyboardButton(text="🔮 Ruxshunos", callback_data="show_ruxshunos")],
         [InlineKeyboardButton(text="🕷️ O'rgimchak-Nuar", callback_data="show_orgimchak_nuar")],
-        [InlineKeyboardButton(text="👑 Haqiqiylar | The Originals", callback_data="show_haqiqiylar")],
         [InlineKeyboardButton(text="🌙 Umar ibn Xattob", callback_data="show_umar_ibn_xattob")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -160,17 +149,10 @@ def get_yigitlar_seasons_menu():
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-# --- YANGI SERIAL LARDAN IBAROT 1-FASLLI MENYULAR ---
+# --- YANGI SERIAL LARDAN IBAROT MENYULAR ---
 def get_avatar_ang_seasons_menu():
     kb = [
-        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_avatar_ang_1")],
-        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=kb)
-
-def get_ruxshunos_seasons_menu():
-    kb = [
-        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_ruxshunos_1")],
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_avatar_ang_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_avatar_ang_2")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -182,16 +164,11 @@ def get_orgimchak_nuar_seasons_menu():
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_haqiqiylar_seasons_menu():
-    kb = [
-        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_haqiqiylar_1")],
-        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=kb)
-
 def get_umar_ibn_xattob_seasons_menu():
     kb = [
-        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_umar_ibn_xattob_1")],
+        [InlineKeyboardButton(text="1-10 qismlar 🍿", callback_data="play_umar_ibn_xattob_1")],
+        [InlineKeyboardButton(text="11-20 qismlar 🍿", callback_data="play_umar_ibn_xattob_2")],
+        [InlineKeyboardButton(text="21-30 qismlar 🍿", callback_data="play_umar_ibn_xattob_3")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -201,12 +178,10 @@ def get_umar_ibn_xattob_seasons_menu():
 @dp.message(CommandStart())
 async def start_handler(message: types.Message):
     user_id = message.from_user.id
-    
     USERS_DB[user_id] = {
         "active": True, 
         "username": message.from_user.username or message.from_user.first_name
     }
-    
     user_states[user_id] = None
     await message.answer(
         f"Salom, {message.from_user.first_name}! 👋\n\n"
@@ -249,13 +224,11 @@ async def add_admin_start(message: types.Message, state: FSMContext):
         return
     
     await state.set_state(AdminStates.waiting_for_admin_id)
-    
     users_list_text = "👤 **Bot a'zolari ro'yxati (ID va Username):**\n\n"
     for uid, data in USERS_DB.items():
         users_list_text += f"🔹 ID: `{uid}` | @{data['username']}\n"
         
-    users_list_text += "\nYangi admin qilmoqchi bo'lgan a me'yoriyning **Telegram ID** raqamini nusxalab, shu yerga yuboring:"
-    
+    users_list_text += "\nYangi admin qilmoqchi bo'lgan a'zoning **Telegram ID** raqamini nusxalab, shu yerga yuboring:"
     await message.answer(users_list_text, parse_mode="Markdown")
 
 @dp.message(AdminStates.waiting_for_admin_id)
@@ -265,7 +238,6 @@ async def process_add_admin(message: types.Message, state: FSMContext):
     
     try:
         new_admin_id = int(message.text.strip())
-        
         if new_admin_id in ADMINS:
             await message.answer("⚠️ Ushbu foydalanuvchi allaqachon admin!")
         elif new_admin_id not in USERS_DB:
@@ -273,7 +245,6 @@ async def process_add_admin(message: types.Message, state: FSMContext):
         else:
             ADMINS.append(new_admin_id)
             await message.answer(f"✅ `ID: {new_admin_id}` muvaffaqiyatli admin qilindi!", parse_mode="Markdown")
-            
             try:
                 await bot.send_message(
                     new_admin_id, 
@@ -282,13 +253,12 @@ async def process_add_admin(message: types.Message, state: FSMContext):
                 )
             except Exception:
                 pass
-
     except ValueError:
         await message.answer("❌ Iltimos, faqat raqamlardan iborat Telegram ID yuboring!")
         
     await state.clear()
 
-# --- ODDIY BO'LIMLAR ---
+# --- BO'LIMLAR ---
 
 @dp.message(F.text == "🎬 Kinolar")
 async def movies_section(message: types.Message):
@@ -325,15 +295,9 @@ async def yigitlar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🎬 **Yigitlar** seriali.\n\nFaslni tanlang:", reply_markup=get_yigitlar_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
-# --- YANGI SERIAL LARDAN IBAROT HANDLERLAR ---
 @dp.callback_query(F.data == "show_avatar_ang")
 async def avatar_ang_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🌊 **Avatar: Ang afsonasi** seriali.\n\nFaslni tanlang:", reply_markup=get_avatar_ang_seasons_menu(), parse_mode="Markdown")
-    await callback.answer()
-
-@dp.callback_query(F.data == "show_ruxshunos")
-async def ruxshunos_handler(callback: types.CallbackQuery):
-    await callback.message.edit_text("🔮 **Ruxshunos** seriali.\n\nFaslni tanlang:", reply_markup=get_ruxshunos_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "show_orgimchak_nuar")
@@ -341,14 +305,9 @@ async def orgimchak_nuar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🕷️ **O'rgimchak-Nuar** seriali.\n\nFaslni tanlang:", reply_markup=get_orgimchak_nuar_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
-@dp.callback_query(F.data == "show_haqiqiylar")
-async def haqiqiylar_handler(callback: types.CallbackQuery):
-    await callback.message.edit_text("👑 **Haqiqiylar | The Originals** seriali.\n\nFaslni tanlang:", reply_markup=get_haqiqiylar_seasons_menu(), parse_mode="Markdown")
-    await callback.answer()
-
 @dp.callback_query(F.data == "show_umar_ibn_xattob")
 async def umar_ibn_xattob_handler(callback: types.CallbackQuery):
-    await callback.message.edit_text("🌙 **Umar ibn Xattob** seriali.\n\nFaslni tanlang:", reply_markup=get_umar_ibn_xattob_seasons_menu(), parse_mode="Markdown")
+    await callback.message.edit_text("🌙 **Umar ibn Xattob** seriali.\n\nQismlar blokini tanlang:", reply_markup=get_umar_ibn_xattob_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "back_to_serials")
@@ -361,7 +320,7 @@ async def send_season_episodes(callback: types.CallbackQuery):
     season_key = callback.data.replace("play_", "")
     season_info = SEASONS_DATA.get(season_key)
 
-    if not season_info or (season_info["start"] == 0 and season_info["end"] == 0):
+    if not season_info:
         await callback.answer("❌ Ushbu fasl ma'lumotlari hali yuklanmagan.", show_alert=True)
         return
 
@@ -394,15 +353,9 @@ async def search_handler(message: types.Message):
     else:
         await message.answer(f"❌ '{message.text}' bo'yicha {current_mode} topilmadi.")
 
-# --- ISHGA TUSHIRISH (RENDER FRIENDLY) ---
+# --- ISHGA TUSHIRISH ---
 async def main():
     logging.basicConfig(level=logging.INFO)
-    
-    # 1. Render porti uchun veb-serverni yoqamiz
-    await start_web_server()
-    
-    # 2. Telegram Bot Polling-ni yoqamiz
-    print("🤖 Aiogram Bot ishga tushmoqda...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
