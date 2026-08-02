@@ -14,11 +14,10 @@ async def start_web_server():
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Render taqdim etgan portni o'qiymiz (standart 8080)
     port = int(os.environ.get("PORT", 8080))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    print(f"🌐 Health-check veb-server {port}-portda ishga tushdi.")
+    print(f"🌐 Health-check veb-server {port}-portda ISHGA TUSHDI!")
 
 
 # --- 2. TELEGRAM VA SKRIPT SOZLAMALARI ---
@@ -63,6 +62,8 @@ def prepare_thumbnail(path):
 
 # --- 4. ASOSIY REPOSTER FUNKSIYASI ---
 async def run_reposter():
+    # Telegram mijozini ishga tushirish
+    await client.start()
     print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
 
     target_entities = []
@@ -125,16 +126,16 @@ async def run_reposter():
     print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
 
 
-# --- 5. BARCHA VAZIFALARNI PARALLEL ISHGA TUSHIRISH ---
+# --- 5. BIR VAQTNING O'ZIDA ISHGA TUSHIRISH ---
 async def main():
-    # Veb-serverni ishga tushiramiz (Render uchun)
+    # 1. Avval darhol Render uchun veb-serverni yoqamiz (Timed Out bo'lmasligi uchun)
     await start_web_server()
     
-    # Telegram mijozini ishga tushiramiz
-    await client.start()
-    
-    # Reposter jarayonini parallel fonda yurgizamiz
-    await run_reposter()
+    # 2. Telegram repost skriptini fonda (background task) parallel topshiriq qilib qo'shamiz
+    asyncio.create_task(run_reposter())
+
+    # 3. Server to'xtab qolmasligi uchun doimiy kutish rejimiga o'tamiz
+    await asyncio.Event().wait()
 
 if __name__ == '__main__':
     asyncio.run(main())
