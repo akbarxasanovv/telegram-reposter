@@ -1,7 +1,27 @@
 import asyncio
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from PIL import Image
 from telethon import TelegramClient
 
+# --- 1. RENDER SERVERI TO'XTAB QOLMASLIGI UCHUN HEALTH-CHECK SERVER ---
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot muvaffaqiyatli ishlayapti!")
+
+def run_health_check():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+# HTTP serverni fonda (background thread) yoqamiz
+threading.Thread(target=run_health_check, daemon=True).start()
+
+
+# --- 2. TELEGRAM VA SKRIPT SOZLAMALARI ---
 API_ID = 36328678
 API_HASH = "c1d096506263cdd949c0708b30dda3c3"
 
@@ -25,8 +45,25 @@ SEASON_EPISODES = {
 
 client = TelegramClient('my_session', API_ID, API_HASH)
 
+
+# --- 3. MUQOVANI TAYYORLASH (PILLOW) ---
+def prepare_thumbnail(path):
+    if not os.path.exists(path):
+        return None
+    try:
+        im = Image.open(path)
+        im = im.convert('RGB')
+        thumb_path = 'thumb_temp.jpg'
+        im.save(thumb_path, 'JPEG')
+        return thumb_path
+    except Exception as e:
+        print(f"⚠️ Rasm tayyorlashda xatolik: {e}")
+        return None
+
+
+# --- 4. ASOSIY REPOSTER FUNKSIYASI ---
 async def main():
-    print("🚀 Video muqovalarini almashtirish va 2 ta kanalga yuklash boshlandi...")
+    print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
 
     target_entities = []
     for chat in TARGET_CHATS:
@@ -38,6 +75,9 @@ async def main():
 
     current_season = 1
     current_episode = 1
+
+    # Muqova rasmini tayyorlaymiz
+    thumb_file = prepare_thumbnail(NEW_THUMBNAIL)
 
     for msg_id in range(START_MSG, END_MSG + 1):
         try:
@@ -55,7 +95,7 @@ async def main():
                         entity,
                         file=downloaded_file,
                         caption=caption,
-                        thumb=NEW_THUMBNAIL if os.path.exists(NEW_THUMBNAIL) else None,
+                        thumb=thumb_file if (thumb_file and os.path.exists(thumb_file)) else None,
                         supports_streaming=True,
                         parse_mode="md"
                     )
@@ -73,12 +113,18 @@ async def main():
 
                 await asyncio.sleep(3)
             else:
-                print(f"⚠️ {msg_id}-postda video topilmadi, o'tkazib yuborildi.")
+                print(f"⚠️ {msg_id}-postda media topilmadi, o'tkazib yuborildi.")
 
         except Exception as e:
             print(f"❌ {msg_id}-postda xatolik yuz berdi: {e}")
             if os.path.exists("temp_video.mp4"):
                 os.remove("temp_video.mp4")
+
+    # Vaqtinchalik thumbnail'ni o'chirib tashlaymiz
+    if thumb_file and os.path.exists(thumb_file):
+        os.remove(thumb_file)
+
+    print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
 
 with client:
     client.loop.run_until_complete(main())
