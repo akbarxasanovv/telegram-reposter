@@ -73,6 +73,12 @@ SEASONS_DATA = {
     "tungi_borilar_4": {"start": 320, "end": 331},
     "tungi_borilar_5": {"start": 332, "end": 351},
     "tungi_borilar_6": {"start": 352, "end": 371},
+
+    # --- YIGITLAR SERIALI DIAPAZONLARI (O'ZINGIZNING KANALINGIZGA QARAB RAQAMLARNI O'ZGARTIRING) ---
+    "yigitlar_1": {"start": 372, "end": 380},
+    "yigitlar_2": {"start": 381, "end": 390},
+    "yigitlar_3": {"start": 391, "end": 400},
+    "yigitlar_4": {"start": 401, "end": 410},
 }
 
 # --- KEYBOARDLAR ---
@@ -96,7 +102,7 @@ def get_serials_menu():
     kb = [
         [InlineKeyboardButton(text="🎬 Mashaqqatlar sari", callback_data="show_mashaqqatlar")],
         [InlineKeyboardButton(text="🩺 Dexter", callback_data="show_dexter")],
-        [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")]
+        [InlineKeyboardButton(text="🐺 Tungi bo'rilar", callback_data="show_tungi_borilar")], # <-- VERGUL TO'G'RILANDI
         [InlineKeyboardButton(text="🎬 Yigitlar", callback_data="show_yigitlar")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -127,6 +133,15 @@ def get_tungi_borilar_seasons_menu():
         [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_tungi_borilar_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_tungi_borilar_2")],
         [InlineKeyboardButton(text="3-Fasl 🍿", callback_data="play_tungi_borilar_3"), InlineKeyboardButton(text="4-Fasl 🍿", callback_data="play_tungi_borilar_4")],
         [InlineKeyboardButton(text="5-Fasl 🍿", callback_data="play_tungi_borilar_5"), InlineKeyboardButton(text="6-Fasl 🍿", callback_data="play_tungi_borilar_6")],
+        [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+# --- YIGITLAR SERIALI FASLLAR MENYUSI ---
+def get_yigitlar_seasons_menu():
+    kb = [
+        [InlineKeyboardButton(text="1-Fasl 🍿", callback_data="play_yigitlar_1"), InlineKeyboardButton(text="2-Fasl 🍿", callback_data="play_yigitlar_2")],
+        [InlineKeyboardButton(text="3-Fasl 🍿", callback_data="play_yigitlar_3"), InlineKeyboardButton(text="4-Fasl 🍿", callback_data="play_yigitlar_4")],
         [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back_to_serials")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -253,6 +268,12 @@ async def dexter_handler(callback: types.CallbackQuery):
 @dp.callback_query(F.data == "show_tungi_borilar")
 async def tungi_borilar_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("🐺 **Tungi bo'rilar** seriali.\n\nFaslni tanlang:", reply_markup=get_tungi_borilar_seasons_menu(), parse_mode="Markdown")
+    await callback.answer()
+
+# --- YIGITLAR HANDLERI ---
+@dp.callback_query(F.data == "show_yigitlar")
+async def yigitlar_handler(callback: types.CallbackQuery):
+    await callback.message.edit_text("🎬 **Yigitlar** seriali.\n\nFaslni tanlang:", reply_markup=get_yigitlar_seasons_menu(), parse_mode="Markdown")
     await callback.answer()
 
 @dp.callback_query(F.data == "back_to_serials")
