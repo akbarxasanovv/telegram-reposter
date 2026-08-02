@@ -1,24 +1,24 @@
 import asyncio
 import os
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from aiohttp import web
 from PIL import Image
 from telethon import TelegramClient
 
-# --- 1. RENDER SERVERI TO'XTAB QOLMASLIGI UCHUN HEALTH-CHECK SERVER ---
-class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Bot muvaffaqiyatli ishlayapti!")
+# --- 1. RENDER PORT BINDING UCHUN ASINXRON HTTP SERVER ---
+async def handle_health_check(request):
+    return web.Response(text="Bot muvaffaqiyatli ishlayapti!")
 
-def run_health_check():
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    
+    # Render taqdim etgan portni o'qiymiz (standart 8080)
     port = int(os.environ.get("PORT", 8080))
-    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
-    server.serve_forever()
-
-# HTTP serverni fonda (background thread) yoqamiz
-threading.Thread(target=run_health_check, daemon=True).start()
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌐 Health-check veb-server {port}-portda ishga tushdi.")
 
 
 # --- 2. TELEGRAM VA SKRIPT SOZLAMALARI ---
@@ -62,7 +62,7 @@ def prepare_thumbnail(path):
 
 
 # --- 4. ASOSIY REPOSTER FUNKSIYASI ---
-async def main():
+async def run_reposter():
     print("🚀 Video muqovalarini almashtirish va kanallarga yuklash boshlandi...")
 
     target_entities = []
@@ -76,7 +76,6 @@ async def main():
     current_season = 1
     current_episode = 1
 
-    # Muqova rasmini tayyorlaymiz
     thumb_file = prepare_thumbnail(NEW_THUMBNAIL)
 
     for msg_id in range(START_MSG, END_MSG + 1):
@@ -120,11 +119,22 @@ async def main():
             if os.path.exists("temp_video.mp4"):
                 os.remove("temp_video.mp4")
 
-    # Vaqtinchalik thumbnail'ni o'chirib tashlaymiz
     if thumb_file and os.path.exists(thumb_file):
         os.remove(thumb_file)
 
     print("\n🎉 Barcha videolar muvaffaqiyatli yuklab bo'lindi!")
 
-with client:
-    client.loop.run_until_complete(main())
+
+# --- 5. BARCHA VAZIFALARNI PARALLEL ISHGA TUSHIRISH ---
+async def main():
+    # Veb-serverni ishga tushiramiz (Render uchun)
+    await start_web_server()
+    
+    # Telegram mijozini ishga tushiramiz
+    await client.start()
+    
+    # Reposter jarayonini parallel fonda yurgizamiz
+    await run_reposter()
+
+if __name__ == '__main__':
+    asyncio.run(main())
